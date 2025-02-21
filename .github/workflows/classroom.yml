@@ -1,0 +1,95 @@
+name: Autograding Tests and Code Review Assignment
+
+on:
+  - push
+  - workflow_dispatch
+  - repository_dispatch
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Run autograding tests (if applicable)
+      # Uncomment and customize this section if you have autograding tests.
+      # - name: Run tests
+      #   uses: classroom-resources/autograding-io-grader@v1
+      #   with:
+      #     test-name: Addition Test
+      #     id: addition-test
+      #     command: "./bin/add.sh"
+      #     input: 1 2
+      #     expected-output: 3
+      #     comparison-method: exact
+      #     timeout: 10
+
+      # Step 3: Report autograding results (if applicable)
+      # Uncomment and customize this section if you are using autograding.
+      # - name: Autograding Reporter
+      #   uses: classroom-resources/autograding-grading-reporter@v1
+      #   env:
+      #     ADDITION-TEST_RESULTS: "${{ steps.addition-test.outputs.result }}"
+      #   with:
+      #     runners: addition-test
+
+  assign-code-reviewers:
+    runs-on: ubuntu-latest
+    needs: run-autograding-tests
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Fetch all student repositories and assign reviewers
+      - name: Assign Peer Reviewers
+        run: |
+          # Replace <org-name> with your GitHub organization name
+          # Replace <assignment-prefix> with the prefix of your assignment repositories
+          ORG_NAME="<org-name>"
+          ASSIGNMENT_PREFIX="<assignment-prefix>"
+
+          # Fetch all repositories in the organization that match the assignment prefix
+          REPOS=$(gh repo list $ORG_NAME --json name --jq '.[].name | select(startswith("'$ASSIGNMENT_PREFIX'"))')
+          echo "REPOS=$REPOS" >> $GITHUB_ENV
+
+      - name: Randomly Assign Reviewers
+        run: |
+          # Convert repos into an array
+          IFS=$'\n' read -rd '' -a REPOS <<< "$REPOS"
+          NUM_REPOS=${#REPOS[@]}
+
+          # Shuffle the array
+          SHUFFLED_REPOS=($(shuf -e "${REPOS[@]}"))
+
+          # Assign reviewers in a circular manner
+          for i in $(seq 0 $((NUM_REPOS - 1))); do
+            REVIEWER_INDEX=$(( (i + 1) % NUM_REPOS ))
+            AUTHOR_REPO=${SHUFFLED_REPOS[$i]}
+            REVIEWER_REPO=${SHUFFLED_REPOS[$REVIEWER_INDEX]}
+
+            # Extract usernames from repo names
+            AUTHOR=$(echo "$AUTHOR_REPO" | cut -d '-' -f 2)
+            REVIEWER=$(echo "$REVIEWER_REPO" | cut -d '-' -f 2)
+
+            echo "Assigning $REVIEWER to review $AUTHOR_REPO"
+
+            # Create an issue to notify the reviewer
+            gh issue create \
+              --repo <org-name>/$AUTHOR_REPO \
+              --title "Code Review Request" \
+              --body "Hi @$REVIEWER, please review this repository. Thanks!"
+          done
+
+      # Optional: Notify students about the review process
+      - name: Notify Students
+        run: |
+          echo "Code review assignments have been completed. Students have been notified via GitHub issues."
