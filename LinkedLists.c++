@@ -177,6 +177,30 @@ class LinkedList
             }
             first_elem = previous;
         }
+        void shuffle()
+        {
+            
+        }
+        void search(int value)
+        {
+            Node* member = first_elem;
+            int counter = 1;
+            while(member != nullptr)
+            {
+                int membervalue = member->get_value();
+                if (membervalue == value){
+                    cout << "The value that you searching for is located on " << counter << " place!" << endl;
+                    break;
+                }
+                else if (member->get_next_member() == nullptr){
+                    cout << "The value that you searching for is not located in the list!" << endl;
+                    break;
+                }
+                member = member->get_next_member();
+                counter++;
+            }
+            
+        }
 };
 
 int GetRandomNumber(int min, int max)
@@ -199,9 +223,9 @@ int main()
     int value;
     int i = 1;
     while(i!=0){
-        cout << "-----------------------------------------------------------------------------------------------------------------------------" << endl;
-        cout << " Choose the operation: 1 - append, 2 - insert, 3 - push, 4 - pop, 5 - remove, 6 - print list, 7 - sort, 8 - reverse, 9 - end" << endl;
-        cout << "-----------------------------------------------------------------------------------------------------------------------------" << endl;
+        cout << "-------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+        cout << " Choose the operation: 1 - append, 2 - insert, 3 - push, 4 - pop, 5 - remove, 6 - print list, 7 - sort, 8 - reverse, 9 - shuffle, 10 - search, 11 - end task" << endl;
+        cout << "-------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         int operation;
         cin >> operation;
         switch (operation)
@@ -241,6 +265,14 @@ int main()
             llist1.reverse();
             break;
         case 9:
+            llist1.shuffle();
+        case 10:
+            cout << "Enter value which you'd like to find: " << endl;
+            int value;
+            cin >> value;
+            llist1.search(value);
+            break;
+        case 11:
             i = 0;
             break;
         default:
